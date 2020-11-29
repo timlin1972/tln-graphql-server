@@ -1,0 +1,26 @@
+{
+  "name": "tln-graphql-server",
+  "version": "1.0.0",
+  "description": "graphql-server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/timlin1972/tln-graphql-server.git"
+  },
+  "keywords": [
+    "graphql-server",
+    "tln"
+  ],
+  "author": "Tim Lin <timlin1972@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/timlin1972/tln-graphql-server/issues"
+  },
+  "homepage": "https://github.com/timlin1972/tln-graphql-server#readme",
+  "dependencies": {
+    "apollo-server-express": "^2.19.0"
+  }
+}
