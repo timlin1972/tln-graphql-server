@@ -6,12 +6,14 @@ const DEF_LOGGER = null;
 const DEF_APP = null;
 const DEF_PORT = 3010;
 const DEF_GRAPHQL_MGR = null;
+const DEF_I18N = null;
 
 const DEF_CONFIGS = {
   logger: DEF_LOGGER,
   app: DEF_APP,
   port: DEF_PORT,
   graphqlMgr: DEF_GRAPHQL_MGR,
+  i18n: DEF_I18N,
 }
 
 class GraphqlServer {
@@ -20,8 +22,15 @@ class GraphqlServer {
     this.app = configs.app || DEF_APP;
     this.port = configs.port || DEF_PORT;
     this.graphqlMgr = configs.graphqlMgr || DEF_GRAPHQL_MGR;
+    this.i18n = configs.i18n || DEF_I18N;
 
-    this.log('info', 'Initialized');
+    if (!this.i18n) {
+      this.log('error', 'I18n must be provided.');
+      process.kill(process.pid, 'SIGTERM');
+      return;
+    }
+
+    this.log('info', this.i18n.t('inited'));
   }
 
   start() {
@@ -51,21 +60,15 @@ class GraphqlServer {
     });
   }
 
-  log = (level=DEF_LEVEL, msg) => {
-    if (this.logger !== null) {
-      this.logger.log(MODULE_NAME, level, msg)
-    }
-    else {
+  log = (level=DEF_LEVEL, msg) => 
+    this.logger ? 
+      this.logger.log(MODULE_NAME, level, msg) :
       console.log(`${level}: [${MODULE_NAME}] ${msg}`);
-    }
-  }
 
-  toString = () => {
-    return `[${MODULE_NAME}]\n \
-      \tlogger: ${this.logger ? 'yes' : 'no'}\n \
-      \tport: ${this.port}\n \
-      `;
-  }
+  toString = () => `[${MODULE_NAME}]\n\
+    \tlogger: ${this.logger ? 'yes' : 'no'}\n\
+    \tport: ${this.port}\n\
+    `;
 }
 
 module.exports = GraphqlServer;
