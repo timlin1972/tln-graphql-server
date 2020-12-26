@@ -24,13 +24,7 @@ class GraphqlServer {
     this.graphqlMgr = configs.graphqlMgr || DEF_GRAPHQL_MGR;
     this.i18n = configs.i18n || DEF_I18N;
 
-    if (!this.i18n) {
-      this.log('error', 'I18n must be provided.');
-      process.kill(process.pid, 'SIGTERM');
-      return;
-    }
-
-    this.log('info', this.i18n.t('inited'));
+    this.log('info', 'Initialized');
   }
 
   start() {
@@ -53,17 +47,22 @@ class GraphqlServer {
         this.graphqlServer.applyMiddleware({ app });
         
         app.listen({ port }, () => {
-          this.log('info', 
-              `graphql server is listening at port ${this.port}${this.graphqlServer.graphqlPath}`);
+          const msgListeningI18n = this.i18n 
+            ? this.i18n.t('graphql server is listening at port') 
+            : 'graphql server is listening at port';
+
+          this.log('info', `${msgListeningI18n} ${this.port}${this.graphqlServer.graphqlPath}`);
           resolve(null);
         });
     });
   }
 
-  log = (level=DEF_LEVEL, msg) => 
+  log = (level=DEF_LEVEL, msg) => {
+    const msgI18n = this.i18n ? this.i18n.t(msg) : msg;
     this.logger ? 
-      this.logger.log(MODULE_NAME, level, msg) :
-      console.log(`${level}: [${MODULE_NAME}] ${msg}`);
+      this.logger.log(MODULE_NAME, level, msgI18n) :
+      console.log(`${level}: [${MODULE_NAME}] ${msgI18n}`);
+  }
 
   toString = () => `[${MODULE_NAME}]\n\
     \tlogger: ${this.logger ? 'yes' : 'no'}\n\
