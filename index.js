@@ -2,16 +2,23 @@ const { ApolloServer, gql } = require('apollo-server-express');
 
 const MODULE_NAME = 'graphql-server';
 
+const STR_EXPRESS_REQUIRED = 'Express web server must be provided.';
+const STR_SERVER = 'graphql server is listening at';
+const STR_SUB_HTTP_SERVER = 'Subscriptions http server is listening at';
+const STR_SUB_HTTPS_SERVER = 'Subscriptions https server is listening at';
+
 const DEF_LOGGER = null;
 const DEF_APP = null;
-const DEF_PORT = 3010;
+const DEF_HTTP_SERVER = null;
+const DEF_HTTPS_SERVER = null;
 const DEF_GRAPHQL_MGR = null;
 const DEF_I18N = null;
 
 const DEF_CONFIGS = {
   logger: DEF_LOGGER,
   app: DEF_APP,
-  port: DEF_PORT,
+  httpServer: DEF_HTTP_SERVER,
+  httpsServer: DEF_HTTPS_SERVER,
   graphqlMgr: DEF_GRAPHQL_MGR,
   i18n: DEF_I18N,
 }
@@ -20,41 +27,62 @@ class GraphqlServer {
   constructor(configs=DEF_CONFIGS) {
     this.logger = configs.logger || DEF_LOGGER;
     this.app = configs.app || DEF_APP;
-    this.port = configs.port || DEF_PORT;
+    this.httpServer = configs.httpServer || DEF_HTTP_SERVER;
+    this.httpsServer = configs.httpsServer || DEF_HTTPS_SERVER;
     this.graphqlMgr = configs.graphqlMgr || DEF_GRAPHQL_MGR;
     this.i18n = configs.i18n || DEF_I18N;
 
     this.log('info', 'Initialized');
   }
 
+  setHttpServer(httpServer) {
+    this.httpServer = httpServer;
+  }
+
+  setHttpsServer(httpsServer) {
+    this.httpsServer = httpsServer;
+  }
+
   start() {
     return new Promise((resolve, reject) => {
-        const { app, graphqlMgr, port } = this;
+        const { app, graphqlMgr, httpServer, httpsServer } = this;
         if (!app) {
-            this.log('error', `Express web server must be provided.`);
-            reject(new Error('Express web server must be provided.'))
-            return;
+            this.log('error', STR_EXPRESS_REQUIRED);
+            return reject(new Error(STR_EXPRESS_REQUIRED))
         }
 
         if (!graphqlMgr) {
-          this.log('error', `Graphql mgr must be provided.`);
-          reject(new Error('Graphql mgr must be provided.'))
-          return;
+          this.log('error', 'Graphql mgr must be provided.');
+          return reject(new Error('Graphql mgr must be provided.'))
+        }
+
+        if (!httpServer) {
+          this.log('error', 'Http server must be provided.');
+          return reject(new Error('Http server must be provided.'))
+        }
+
+        if (!httpsServer) {
+          this.log('error', 'Https server must be provided.');
+          return reject(new Error('Https server must be provided.'))
         }
 
         this.graphqlServer = new ApolloServer(graphqlMgr.getSchema());
 
         this.graphqlServer.applyMiddleware({ app });
         
-        app.listen({ port }, () => {
-          const msgListeningI18n = this.i18n 
-            ? this.i18n.t('graphql server is listening at port') 
-            : 'graphql server is listening at port';
+        const msgListeningI18n = this.i18n ? this.i18n.t(STR_SERVER) : STR_SERVER;
+        this.log('info', `${msgListeningI18n} ${this.graphqlServer.graphqlPath}`);
 
-          this.log('info', `${msgListeningI18n} ${this.port}${this.graphqlServer.graphqlPath}`);
-          resolve(null);
-        });
-    });
+        this.graphqlServer.installSubscriptionHandlers(this.httpServer);
+        const msgSubHttpI18n = this.i18n ? this.i18n.t(STR_SUB_HTTP_SERVER) : STR_SUB_HTTP_SERVER;
+        this.log('info', `${msgSubHttpI18n} ${this.graphqlServer.subscriptionsPath}`);
+
+        this.graphqlServer.installSubscriptionHandlers(this.httpsServer);
+        const msgSubHttpsI18n = this.i18n ? this.i18n.t(STR_SUB_HTTPS_SERVER) : STR_SUB_HTTPS_SERVER;
+        this.log('info', `${msgSubHttpsI18n} ${this.graphqlServer.subscriptionsPath}`);
+
+        resolve(null);
+    })
   }
 
   log = (level=DEF_LEVEL, msg) => {
@@ -66,7 +94,11 @@ class GraphqlServer {
 
   toString = () => `[${MODULE_NAME}]\n\
     \tlogger: ${this.logger ? 'yes' : 'no'}\n\
-    \tport: ${this.port}\n\
+    \tapp: ${this.app ? 'yes' : 'no'}\n\
+    \thttpServer: ${this.httpServer ? 'yes' : 'no'}\n\
+    \thttpsServer: ${this.httpsServer ? 'yes' : 'no'}\n\
+    \tgraphqlMgr: ${this.graphqlMgr ? 'yes' : 'no'}\n\
+    \ti18n: ${this.i18n ? 'yes' : 'no'}\n\
     `;
 }
 
